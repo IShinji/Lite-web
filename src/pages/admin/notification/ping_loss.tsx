@@ -556,7 +556,8 @@ const PingLossContent = () => {
             </Tabs.Trigger>
           </Tabs.List>
         </AdminSheetTabs>
-        <AdminListShell className="mt-3">
+        <Tabs.Content value={sheet} className="admin-tab-panel pt-3">
+        <AdminListShell>
           <AdminListFiltersBar>
             <Stack
               direction="row"
@@ -648,6 +649,7 @@ const PingLossContent = () => {
             }
           />
         </AdminListShell>
+        </Tabs.Content>
       </Tabs.Root>
     </div>
   );
