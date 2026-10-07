@@ -899,6 +899,7 @@
     "selected": "{{count}}选择",
     "selected_total": "已选 {{count}} / 共 {{total}}",
     "self_update_failed": "自动更新失败",
+    "self_update_local_patch": "检测到新版本。本实例包含自定义补丁，一键更新会覆盖补丁，请自行同步上游并重新构建。",
     "self_update_metadata_missing": "发布版本缺少自动更新校验信息",
     "self_update_preparing": "正在下载并校验",
     "self_update_restarting": "更新已校验，服务正在重启",
