@@ -12,6 +12,8 @@ export interface DashboardTrafficDay {
   up: number;
   down: number;
   billable: number;
+  /** Backend flag: this day is incomplete (history not backfilled far enough). */
+  partial?: boolean;
 }
 
 export interface DashboardTrafficHour {
@@ -220,6 +222,9 @@ export interface DashboardChartsData {
     daily: DashboardTrafficDay[];
     ranking: DashboardTrafficRankItem[];
     history_ready: boolean;
+    tz?: string;
+    history_complete?: boolean;
+    ledger_since?: string;
     error?: string;
   };
   latency: DashboardLatencySummary;
@@ -233,6 +238,7 @@ export interface DashboardChartsData {
 
 export interface DashboardTrafficDayResponse {
   day: string;
+  tz?: string;
   items: DashboardTrafficRankItem[];
   generated_at: string;
 }
@@ -313,12 +319,31 @@ export function dashboardOnlinePercent(data: DashboardData): number {
   return Math.round((data.servers.online / data.servers.total) * 100);
 }
 
+/** Browser IANA time zone, or undefined when it cannot be determined. */
+export function getBrowserTimeZone(): string | undefined {
+  try {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return zone || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Scope a cache key by time zone so snapshots never leak across zones. */
+export function dashboardTzCacheKey(key: string, tz: string | null | undefined = getBrowserTimeZone()): string {
+  return tz ? `${key}@${tz}` : key;
+}
+
+/** `day` is a calendar day (YYYY-MM-DD) in the requested zone; label it without any zone shift. */
 export function shortDashboardDay(day: string, locale: string): string {
-  const parsed = new Date(`${day}T00:00:00+08:00`);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  if (!match) return day;
+  const parsed = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
   if (Number.isNaN(parsed.getTime())) return day;
   return new Intl.DateTimeFormat(locale, {
     month: "numeric",
     day: "numeric",
+    timeZone: "UTC",
   }).format(parsed);
 }
 

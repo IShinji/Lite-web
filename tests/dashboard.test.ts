@@ -8,6 +8,8 @@ import {
   dashboardRuntimeStorageTotal,
   dashboardTrafficAxisWidth,
   filterAndSortTrafficDayItems,
+  dashboardTzCacheKey,
+  getBrowserTimeZone,
   groupByVisualRow,
   shortDashboardDay,
   type DashboardData,
@@ -305,4 +307,33 @@ test("day traffic details can be searched and sorted without loading on dashboar
     filterAndSortTrafficDayItems(items, "", "up", "desc").map((item) => item.name),
     ["beta", "alpha"],
   );
+});
+
+test("day labels are calendar days independent of the host time zone", () => {
+  const previous = process.env.TZ;
+  try {
+    for (const zone of ["America/Los_Angeles", "Pacific/Kiritimati", "UTC"]) {
+      process.env.TZ = zone;
+      assert.match(shortDashboardDay("2026-07-31", "en"), /7.*31/, zone);
+      assert.match(shortDashboardDay("2026-08-01", "en"), /8.*1/, zone);
+    }
+  } finally {
+    if (previous === undefined) delete process.env.TZ;
+    else process.env.TZ = previous;
+  }
+});
+
+test("browser time zone is an IANA name and keys cache entries", () => {
+  const zone = getBrowserTimeZone();
+  assert.equal(typeof zone, "string");
+  assert.ok(zone && zone.length > 0);
+  assert.notEqual(dashboardTzCacheKey("traffic:5", "Asia/Tokyo"), dashboardTzCacheKey("traffic:5", "America/New_York"));
+  assert.equal(dashboardTzCacheKey("traffic:5", null), "traffic:5");
+});
+
+test("dashboard requests send tz and tz-scoped cache keys", () => {
+  const api = readFileSync(new URL("../src/utils/dashboardApi.ts", import.meta.url), "utf8");
+  assert.match(api, /params\.set\("tz"/);
+  assert.match(api, /dashboardTzCacheKey\(/);
+  assert.doesNotMatch(readFileSync(new URL("../src/utils/dashboard.ts", import.meta.url), "utf8"), /\+08:00/);
 });

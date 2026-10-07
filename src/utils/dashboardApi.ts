@@ -1,4 +1,6 @@
 import {
+  dashboardTzCacheKey,
+  getBrowserTimeZone,
   type DashboardChartsData,
   type DashboardData,
   type DashboardTrafficDayResponse,
@@ -58,11 +60,13 @@ export async function requestDashboard(
   rankingLimit: number,
   accountKey = "authenticated",
 ): Promise<DashboardData> {
-  const key = `${sections.join(",")}:${rankingLimit}`;
+  const key = dashboardTzCacheKey(`${sections.join(",")}:${rankingLimit}`);
   const id = dashboardRequestId(accountKey, key);
   const pending = dashboardSummaryCache.pending.get(id);
   if (pending) return pending;
   const params = new URLSearchParams({ sections: sections.join(","), limit: String(rankingLimit) });
+  const tz = getBrowserTimeZone();
+  if (tz) params.set("tz", tz);
   const request = fetch(`/api/admin/dashboard?${params}`, { cache: "no-store" })
     .then((response) => readDashboardResponse<DashboardData>(response))
     .then((data) => {
@@ -84,11 +88,13 @@ export async function requestDashboardCharts(
   rankingLimit: number,
   accountKey = "authenticated",
 ): Promise<DashboardChartsData> {
-  const key = `${sections.join(",")}:${rankingLimit}`;
+  const key = dashboardTzCacheKey(`${sections.join(",")}:${rankingLimit}`);
   const id = dashboardRequestId(accountKey, key);
   const pending = dashboardChartsCache.pending.get(id);
   if (pending) return pending;
   const params = new URLSearchParams({ sections: sections.join(","), limit: String(rankingLimit) });
+  const tz = getBrowserTimeZone();
+  if (tz) params.set("tz", tz);
   const request = fetch(`/api/admin/dashboard/charts?${params}`, { cache: "no-store" })
     .then((response) => readDashboardResponse<DashboardChartsData>(response))
     .then((data) => {
@@ -110,27 +116,30 @@ const trafficDayCacheLimit = 8;
 let pendingTrafficDayRequest: { day: string; request: Promise<DashboardTrafficDayResponse> } | null = null;
 
 export function getCachedDashboardTrafficDay(day: string): DashboardTrafficDayResponse | null {
-  return trafficDayCache.get(day) ?? null;
+  return trafficDayCache.get(dashboardTzCacheKey(day)) ?? null;
 }
 
 export function prefetchDashboardTrafficDay(day: string) {
-  if (!day || trafficDayCache.has(day)) return;
+  if (!day || trafficDayCache.has(dashboardTzCacheKey(day))) return;
   void requestDashboardTrafficDay(day).catch(() => {
     // Hover prefetch is best-effort; clicking the bar still reports errors.
   });
 }
 
 export async function requestDashboardTrafficDay(day: string): Promise<DashboardTrafficDayResponse> {
-  const cached = trafficDayCache.get(day);
+  const cacheKey = dashboardTzCacheKey(day);
+  const cached = trafficDayCache.get(cacheKey);
   if (cached) return cached;
-  if (pendingTrafficDayRequest?.day === day) {
+  if (pendingTrafficDayRequest?.day === cacheKey) {
     return pendingTrafficDayRequest.request;
   }
   const params = new URLSearchParams({ day });
+  const tz = getBrowserTimeZone();
+  if (tz) params.set("tz", tz);
   const request = fetch(`/api/admin/dashboard/traffic-day?${params}`, { cache: "no-store" })
     .then((response) => readDashboardResponse<DashboardTrafficDayResponse>(response))
     .then((data) => {
-      trafficDayCache.set(day, data);
+      trafficDayCache.set(cacheKey, data);
       if (trafficDayCache.size > trafficDayCacheLimit) {
         const oldest = trafficDayCache.keys().next().value;
         if (oldest) trafficDayCache.delete(oldest);
@@ -138,15 +147,16 @@ export async function requestDashboardTrafficDay(day: string): Promise<Dashboard
       return data;
     })
     .finally(() => {
-      if (pendingTrafficDayRequest?.day === day) {
+      if (pendingTrafficDayRequest?.day === cacheKey) {
         pendingTrafficDayRequest = null;
       }
     });
-  pendingTrafficDayRequest = { day, request };
+  pendingTrafficDayRequest = { day: cacheKey, request };
   return request;
 }
 
-export function getDashboardSnapshot(key: string, accountKey = "authenticated"): DashboardData | null {
+export function getDashboardSnapshot(rawKey: string, accountKey = "authenticated"): DashboardData | null {
+  const key = dashboardTzCacheKey(rawKey);
   const id = dashboardRequestId(accountKey, key);
   const cached = dashboardSummaryCache.snapshots.get(id);
   if (cached) {
@@ -158,7 +168,8 @@ export function getDashboardSnapshot(key: string, accountKey = "authenticated"):
   return data;
 }
 
-export function getDashboardChartsSnapshot(key: string, accountKey = "authenticated"): DashboardChartsData | null {
+export function getDashboardChartsSnapshot(rawKey: string, accountKey = "authenticated"): DashboardChartsData | null {
+  const key = dashboardTzCacheKey(rawKey);
   const id = dashboardRequestId(accountKey, key);
   const cached = dashboardChartsCache.snapshots.get(id);
   if (cached) {
