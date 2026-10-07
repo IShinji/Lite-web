@@ -899,6 +899,7 @@
     "selected": "{{count}} selected",
     "selected_total": "{{count}} / {{total}} selected",
     "self_update_failed": "Automatic update failed",
+    "self_update_local_patch": "A new version is available. This instance carries custom patches and a one-click update would overwrite them. Please sync upstream and rebuild yourself.",
     "self_update_metadata_missing": "The release is missing automatic update verification metadata",
     "self_update_preparing": "Downloading and verifying",
     "self_update_restarting": "Update verified; the service is restarting",

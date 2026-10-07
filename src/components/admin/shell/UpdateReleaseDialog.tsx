@@ -1,5 +1,6 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
@@ -22,6 +23,7 @@ import { GITHUB_ALERT_LABELS, remarkGithubAlerts } from "@/utils/githubMarkdown"
 import {
   formatReleaseVersion,
   formatVersion,
+  isLocalPatchSelfUpdate,
   parseReleaseVersionHash,
   visibleReleaseBody,
   type GithubReleaseInfo,
@@ -234,7 +236,9 @@ export default function UpdateReleaseDialog({
   const canSelfUpdate =
     versionInfo?.deployment === "linux" &&
     Boolean(selfUpdate?.supported) &&
-    Boolean(parseReleaseVersionHash(latestRelease?.body));
+    Boolean(parseReleaseVersionHash(latestRelease?.body)) &&
+    !isLocalPatchSelfUpdate(selfUpdate);
+  const localPatch = isLocalPatchSelfUpdate(selfUpdate);
 
   return (
     <Dialog
@@ -321,6 +325,18 @@ export default function UpdateReleaseDialog({
           bgcolor: "background.paper",
         }}
       >
+        {localPatch ? (
+          <Alert
+            severity="warning"
+            data-testid="admin-update-local-patch"
+            sx={{ flexBasis: "100%", mb: 0.5 }}
+          >
+            {t(
+              "common.self_update_local_patch",
+              "检测到新版本。本实例包含自定义补丁，一键更新会覆盖补丁，请自行同步上游并重新构建。",
+            )}
+          </Alert>
+        ) : null}
         <Button onClick={onClose} color="inherit">
           {t("cancel", "取消")}
         </Button>

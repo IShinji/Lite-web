@@ -899,6 +899,7 @@
     "selected": "{{count}}選択",
     "selected_total": "{{count}} / {{total}} 選択中",
     "self_update_failed": "更新に失敗しました。現在のバージョンは保持されています",
+    "self_update_local_patch": "新しいバージョンが見つかりました。このインスタンスにはカスタムパッチが含まれており、ワンクリック更新ではパッチが上書きされます。上流を同期して自分で再ビルドしてください。",
     "self_update_metadata_missing": "更新情報が不完全です。後でもう一度お試しください",
     "self_update_preparing": "更新を準備しています...",
     "self_update_restarting": "更新が完了し、Lite を再起動しています。サービス復旧後にページを自動更新します。",

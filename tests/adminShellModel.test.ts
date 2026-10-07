@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  isLocalPatchSelfUpdate,
   isReleaseNewer,
   parseReleaseVersionHash,
   visibleReleaseBody,
@@ -41,4 +42,12 @@ test("treats same version with a different hash as newer", () => {
   assert.equal(isReleaseNewer(release, "2.2.4", "newhash"), false);
   assert.equal(isReleaseNewer(release, "2.2.5", "oldhash"), false);
   assert.equal(isReleaseNewer(release, "2.2.3", "oldhash"), true);
+});
+
+test("isLocalPatchSelfUpdate only matches the local_patch reason", () => {
+  const base = { deployment: "linux", supported: false };
+  assert.equal(isLocalPatchSelfUpdate({ ...base, reason: "local_patch" }), true);
+  assert.equal(isLocalPatchSelfUpdate({ ...base, reason: "root_required" }), false);
+  assert.equal(isLocalPatchSelfUpdate(null), false);
+  assert.equal(isLocalPatchSelfUpdate(undefined), false);
 });

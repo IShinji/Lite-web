@@ -30,6 +30,13 @@ export interface SelfUpdateCapability {
 
 export type UpdatePhase = "idle" | "preparing" | "restarting";
 
+/** 本实例带自定义补丁时后端返回 reason=local_patch，此时禁用一键更新。 */
+export function isLocalPatchSelfUpdate(
+  selfUpdate: Pick<SelfUpdateCapability, "reason"> | null | undefined,
+): boolean {
+  return selfUpdate?.reason === "local_patch";
+}
+
 export function parseSemver(input?: string | null): number[] | null {
   if (!input) return null;
   const normalized = String(input).trim().replace(/^v/i, "");
