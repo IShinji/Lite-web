@@ -486,6 +486,7 @@
     "download": "下載",
     "external_storage": "外部儲存空間",
     "history_preparing": "正在彙總過往傳輸用量統計資訊，完成後將顯示完整圖表。",
+    "partial_day": "該日資料不完整",
     "hourly_traffic_hint": "每小時總計上傳與下載",
     "last_compaction": "最近整理",
     "latency_jitter_ranking": "延遲抖動排名",

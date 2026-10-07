@@ -486,6 +486,7 @@
     "download": "Down",
     "external_storage": "External storage",
     "history_preparing": "Historical traffic is being prepared. The full trend will appear automatically.",
+    "partial_day": "Data incomplete for this day",
     "hourly_traffic_hint": "Cumulative upload and download by hour",
     "last_compaction": "Last compaction",
     "latency_jitter_ranking": "Latency jitter ranking",

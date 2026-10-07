@@ -1812,6 +1812,9 @@ function LegacyAdminDashboard() {
                         <div className="rounded-md border bg-background px-3 py-2 text-xs shadow-lg">
                           <div className="mb-1 text-muted-foreground">{label}</div>
                           <div className="font-medium">{t("admin_dashboard.billable")}: {formatBytes(Number(payload[0]?.value ?? 0))}</div>
+                          {(payload[0]?.payload as { partial?: boolean } | undefined)?.partial ? (
+                            <div className="mt-1 text-[var(--orange-11)]">{t("admin_dashboard.partial_day")}</div>
+                          ) : null}
                         </div>
                       ) : null}
                     />

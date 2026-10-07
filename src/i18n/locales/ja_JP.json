@@ -486,6 +486,7 @@
     "download": "ダウンロード",
     "external_storage": "外部ストレージ",
     "history_preparing": "過去のトラフィックを準備中です。完了後に自動表示されます。",
+    "partial_day": "この日のデータは不完全です",
     "hourly_traffic_hint": "時間ごとの累積アップロードとダウンロード",
     "last_compaction": "最終圧縮",
     "latency_jitter_ranking": "遅延ジッターランキング",
