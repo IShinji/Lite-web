@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   dashboardLocalStorageTotal,
+  clientTrafficDailyUrl,
   dashboardOnlinePercent,
   dashboardRuntimeStorageTotal,
   dashboardTrafficAxisWidth,
@@ -12,6 +13,7 @@ import {
   getBrowserTimeZone,
   groupByVisualRow,
   shortDashboardDay,
+  zoneDayKey,
   type DashboardData,
 } from "../src/utils/dashboard.ts";
 import {
@@ -336,4 +338,23 @@ test("dashboard requests send tz and tz-scoped cache keys", () => {
   assert.match(api, /params\.set\("tz"/);
   assert.match(api, /dashboardTzCacheKey\(/);
   assert.doesNotMatch(readFileSync(new URL("../src/utils/dashboard.ts", import.meta.url), "utf8"), /\+08:00/);
+});
+
+test("node daily traffic request carries the viewer time zone", () => {
+  assert.equal(
+    clientTrafficDailyUrl("node/a", "America/Los_Angeles"),
+    "/api/admin/client/node%2Fa/traffic-daily?tz=America%2FLos_Angeles",
+  );
+  assert.equal(clientTrafficDailyUrl("node-a", null), "/api/admin/client/node-a/traffic-daily");
+  const page = readFileSync(new URL("../src/pages/admin/NodeUsageStats.tsx", import.meta.url), "utf8");
+  assert.match(page, /clientTrafficDailyUrl\(/);
+  assert.doesNotMatch(page, /Asia\/Shanghai/);
+});
+
+test("fallback daily keys follow the viewer zone instead of Beijing", () => {
+  // 2026-10-18 20:00 PDT is already 2026-10-19 in Beijing.
+  const at = "2026-10-19T03:00:00Z";
+  assert.equal(zoneDayKey(at, "America/Los_Angeles"), "2026-10-18");
+  assert.equal(zoneDayKey(at, "Asia/Shanghai"), "2026-10-19");
+  assert.equal(zoneDayKey("not a date", "Asia/Shanghai"), "");
 });

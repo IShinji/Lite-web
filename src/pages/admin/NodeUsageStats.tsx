@@ -28,7 +28,7 @@ import type { NodeDetail } from "@/contexts/NodeDetailsContext";
 import type { Record as LiveRecord } from "@/types/LiveData";
 import { nodeTrafficType, trafficUsed } from "@/utils/trafficAccounting";
 import { formatTrafficResetRangeLabel } from "@/utils/trafficCycle";
-import { dashboardTrafficAxisWidth } from "@/utils/dashboard";
+import { clientTrafficDailyUrl, dashboardTrafficAxisWidth, zoneDayKey } from "@/utils/dashboard";
 import { formatBytes } from "@/utils/unitHelper";
 import { LITE_BLUE } from "@/theme/brand";
 import {
@@ -66,21 +66,10 @@ function shortDayLabel(day: string) {
   return `${Number(match[2])}/${Number(match[3])}`;
 }
 
-function beijingDayKey(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
-}
-
 function dailyFromNetworkRecords(rows: LoadRecord[]): DailyTrafficPoint[] {
   const lastByDay = new Map<string, { up: number; down: number }>();
   for (const row of rows) {
-    const day = beijingDayKey(row.time);
+    const day = zoneDayKey(row.time);
     if (!day) continue;
     lastByDay.set(day, {
       up: Number(row.net_total_up) || 0,
@@ -106,6 +95,7 @@ type DailyTrafficPoint = {
   up: number;
   down: number;
   billable: number;
+  partial?: boolean;
 };
 
 function dailyTrafficAxisValues(daily: DailyTrafficPoint[]) {
@@ -319,7 +309,7 @@ export default function NodeUsageStats({
     const controller = new AbortController();
     const loadLedger = async () => {
       const response = await fetch(
-        `/api/admin/client/${encodeURIComponent(node.uuid)}/traffic-daily`,
+        clientTrafficDailyUrl(node.uuid),
         { cache: "no-store", signal: controller.signal },
       );
       const payload = await response.json().catch(() => null);
@@ -329,7 +319,7 @@ export default function NodeUsageStats({
       if (rows.length === 0) throw new Error("empty daily ledger");
       setDailyReady(data?.history_ready !== false);
       setDaily(
-        rows.map((row: { day?: string; up?: number; down?: number; billable?: number }) => {
+        rows.map((row: { day?: string; up?: number; down?: number; billable?: number; partial?: boolean }) => {
           const day = String(row.day || "");
           return {
             day,
@@ -337,6 +327,7 @@ export default function NodeUsageStats({
             up: Number(row.up) || 0,
             down: Number(row.down) || 0,
             billable: Number(row.billable) || 0,
+            partial: row.partial === true,
           };
         }),
       );
@@ -877,6 +868,9 @@ export default function NodeUsageStats({
                       {t("admin_dashboard.billable", "计费")}{" "}
                       {formatBytes(Number(payload[0]?.payload?.billable) || 0)}
                     </div>
+                    {(payload[0]?.payload as DailyTrafficPoint | undefined)?.partial ? (
+                      <div className="mt-1 text-[var(--orange-11)]">{t("admin_dashboard.partial_day")}</div>
+                    ) : null}
                   </div>
                 ) : null
               }

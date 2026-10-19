@@ -334,6 +334,24 @@ export function dashboardTzCacheKey(key: string, tz: string | null | undefined =
   return tz ? `${key}@${tz}` : key;
 }
 
+/** Per-node daily traffic ledger, sliced on the viewer's day boundary. */
+export function clientTrafficDailyUrl(uuid: string, tz: string | null | undefined = getBrowserTimeZone()): string {
+  const url = `/api/admin/client/${encodeURIComponent(uuid)}/traffic-daily`;
+  return tz ? `${url}?${new URLSearchParams({ tz })}` : url;
+}
+
+/** Calendar day (YYYY-MM-DD) of an instant in the viewer zone; "" for invalid input. */
+export function zoneDayKey(value: string, tz: string | null | undefined = getBrowserTimeZone()): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz || undefined,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
 /** `day` is a calendar day (YYYY-MM-DD) in the requested zone; label it without any zone shift. */
 export function shortDashboardDay(day: string, locale: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
